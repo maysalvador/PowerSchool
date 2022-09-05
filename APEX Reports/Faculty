@@ -1,0 +1,19 @@
+SELECT 
+    T.TeacherNumber AS EmployeeID,
+    T.First_Name AS FirstName,
+    T.Middle_Name AS MiddleName,
+    T.Last_Name AS LastName,
+    T.Email_Addr AS Email,
+    DECODE(T.HomeSchoolID,
+        300,'High School',
+        200,'Middle School',
+        100,'Lower School',
+        0,'Administrative') AS Department,
+    DECODE(EXT.BLOQUEIO,
+    0,'Unblocked',
+    1,'Blocked') AS BLOCKED
+FROM 
+    Teachers T INNER JOIN U_DEF_EXT_SCHOOLSTAFF EXT ON T.DCID = EXT.SCHOOLSTAFFDCID
+WHERE 
+    T.SchoolID = T.HomeSchoolID and
+    T.Status <> 2

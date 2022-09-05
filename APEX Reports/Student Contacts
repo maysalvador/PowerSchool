@@ -1,0 +1,58 @@
+WITH 
+    mother_email AS (
+        SELECT
+            SCA.StudentDCID,
+            E.EmailAddress
+        FROM
+            Person P
+            INNER JOIN StudentContactAssoc SCA ON (SCA.personID = p.id)
+            INNER JOIN   SCD ON (SCD.STUDENTCONTACTASSOCID = SCA.STUDENTCONTACTASSOCID)
+            INNER JOIN PersonEmailAddressAssoc PEAA ON (PEAA.PersonID = P.ID)
+            INNER JOIN EmailAddress E ON (E.EmailAddressID = PEAA.EmailAddressID)
+        WHERE
+            SCD.RELATIONSHIPTYPECODESETID = 30 OR SCD.RELATIONSHIPTYPECODESETID = 23216
+    ),
+    father_email AS (
+        SELECT
+            SCA.StudentDCID,
+            E.EmailAddress
+        FROM
+            Person P
+            INNER JOIN StudentContactAssoc SCA ON (SCA.personID = p.id)
+            INNER JOIN StudentContactDetail SCD ON (SCD.STUDENTCONTACTASSOCID = SCA.STUDENTCONTACTASSOCID)
+            INNER JOIN PersonEmailAddressAssoc PEAA ON (PEAA.PersonID = P.ID)
+            INNER JOIN EmailAddress E ON (E.EmailAddressID = PEAA.EmailAddressID)
+        WHERE
+            SCD.RELATIONSHIPTYPECODESETID = 26 OR SCD.RELATIONSHIPTYPECODESETID = 23215
+    )
+
+    
+SELECT
+    stds.dcid AS std_DCID,
+    stdscore.StudentsDCID AS stdcore_DCID,
+    stds.student_number AS student_number,
+    stds.SchoolID AS SchoolID,
+    stds.last_name AS last_name,
+    stds.first_name AS first_name,
+    stds.middle_name AS middle_name,
+    stds.gender AS gender,
+    stds.grade_level AS grade_level,
+    stdscore.graduation_year AS graduation_year,
+    stds.DOB AS DOB,
+    stds.Street AS Street,
+    stds.City AS City,
+    stds.State AS State,
+    stds.Zip AS Zip,
+    stds.Home_Phone AS Home_Phone,
+    stds.Home_Room AS Home_Room,
+    stds.Lastfirst AS Lastfirst,
+    stds.enroll_status AS enroll_status,
+    mother_email.EmailAddress as Mother,
+    father_email.EmailAddress as Father
+FROM
+    Students stds
+    LEFT JOIN studentcorefields stdscore ON stds.dcid = stdscore.StudentsDCID
+    LEFT JOIN (SELECT * FROM mother_email) mother_email on mother_email.StudentDCID = stds.dcid
+    LEFT JOIN (SELECT * FROM father_email) father_email on father_email.StudentDCID = stds.dcid
+WHERE
+    stds.enroll_status = 0

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://plugin.powerschool.pearson.com"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://plugin.powerschool.pearson.com plugin.xsd"
+        name="Graded Destiny Data Sync"
+        version="5.0"
+        description="Extracts data for Destiny">
+
+    <oauth></oauth>
+
+    <access_request>
+
+        <field table="students" field="dcid" access="ViewOnly" />
+        <field table="studentcorefields" field="StudentsDCID" access="ViewOnly" />
+        <field table="students" field="student_number" access="ViewOnly" />
+        <field table="students" field="SchoolID" access="ViewOnly" />
+        <field table="students" field="last_name" access="ViewOnly" />
+        <field table="students" field="first_name" access="ViewOnly" />
+        <field table="students" field="middle_name" access="ViewOnly" />
+        <field table="students" field="gender" access="ViewOnly" />
+        <field table="students" field="grade_level" access="ViewOnly" />
+        <field table="studentcorefields" field="graduation_year" access="ViewOnly" />
+        <field table="students" field="DOB" access="ViewOnly" />
+        <field table="students" field="Street" access="ViewOnly" />
+        <field table="students" field="City" access="ViewOnly" />
+        <field table="students" field="State" access="ViewOnly" />
+        <field table="students" field="Zip" access="ViewOnly" />
+        <field table="students" field="Home_Phone" access="ViewOnly" />
+        <field table="students" field="Home_Room" access="ViewOnly" />
+        <field table="students" field="Lastfirst" access="ViewOnly" />
+        <field table="students" field="enroll_status" access="ViewOnly" />
+        <field table="EmailAddress" field="EmailAddress" access="ViewOnly" />
+
+    </access_request>
+
+
+    <publisher name="Graded School">
+        <contact email="mayra.salvador@graded.br" />
+    </publisher>
+</plugin>

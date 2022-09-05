@@ -1,0 +1,212 @@
+<queries>
+
+    <query name="com.graded.destiny.students.get_data" coreTable="Students">
+        <description>A query that retrieves all Students for Destiny</description>
+        <columns>
+        
+            <column column="Students.dcid">std_DCID</column>
+            <column column="studentcorefields.StudentsDCID">stdcore_DCID</column>
+            <column column="Students.student_number">student_number</column>
+            <column column="Students.SchoolID">SchoolID</column>
+            <column column="Students.last_name">last_name</column>
+            <column column="Students.first_name">first_name</column>
+            <column column="Students.middle_name">middle_name</column>
+            <column column="Students.gender">gender</column>
+            <column column="Students.grade_level">grade_level</column>
+            <column column="studentcorefields.graduation_year">graduation_year</column>
+            <column column="Students.DOB">DOB</column>
+            <column column="Students.Street">Street</column>
+            <column column="Students.City">City</column>
+            <column column="Students.State">State</column>
+            <column column="Students.Zip">Zip</column>
+            <column column="Students.Home_Phone">Home_Phone</column>
+            <column column="Students.Home_Room">Home_Room</column>
+            <column column="Students.Lastfirst">Lastfirst</column>
+            <column column="Students.enroll_status">enroll_status</column>
+            <column column="Students.Home_Phone">Contacts1_Email</column>
+            <column column="Students.Home_Phone">Contacts2_Email</column>
+            <column column="studentcorefields.graduation_year">graduation_year</column>
+
+        </columns>
+    <sql><![CDATA[
+WITH Contacts AS (
+    SELECT
+        Students.DCID,
+        /* NVL2() checks its first parameter... If non-NULL, it returns
+           the second parameter. Otherwise it returns the third parameter. */
+        NVL2(PhoneNumber.PhoneNumber,
+            /* SUBSTR() allows us to chunk the field. I want to get just
+               the area code from the phone number, concatenate a dash,
+               concatenate prefix, another dash, and the suffix. Had we not
+               used NVL2 and there were no phone numbers, we'd end up with
+               two dashes. This method allows us to actually return NULL if
+               there's no phone number and a nicely formatted one if there is.
+            */
+            SUBSTR(PhoneNumber.PhoneNumber,1,3) || '-' ||
+            SUBSTR(PhoneNumber.PhoneNumber,4,3) || '-' ||
+            SUBSTR(PhoneNumber.PhoneNumber,7),
+            NULL
+        ) PhoneNumber,
+        LOWER(EmailAddress.EmailAddress) Email,
+        DENSE_RANK() OVER (
+            /* We need a useful priority order ranked by student in order of
+               whatever ContactPriorityOrder happens to be... */
+            PARTITION BY
+                Students.DCID
+            ORDER BY
+                StudentContactAssoc.ContactPriorityOrder
+        ) PriorityRank,
+        DENSE_RANK() OVER (
+            /* Within that contact, we need to rank the phone numbers we find
+               by the phone number priority order. */
+            PARTITION BY
+                Students.DCID,
+                StudentContactAssoc.ContactPriorityOrder
+            ORDER BY
+                PersonPhoneNumberAssoc.PhoneNumberPriorityOrder
+        ) PhoneNumberRank,
+        DENSE_RANK() OVER (
+            /* ...and the same idea with the E-mail Addresses */
+            PARTITION BY
+                Students.DCID,
+                StudentContactAssoc.ContactPriorityOrder
+            ORDER BY
+                PersonEmailAddressAssoc.EmailAddressPriorityOrder
+        ) EmailRank
+    FROM
+        Students
+        /* LEFT JOINs ensure we pull all students whether or not they have
+           matching contacts. Since our base table is LEFT JOINed, everything
+           involving it also needs to be LEFT JOINed.
+        */
+        LEFT JOIN StudentContactAssoc
+            ON Students.DCID = StudentContactAssoc.StudentDCID
+        LEFT JOIN StudentContactDetail
+            USING (StudentContactAssocID)
+            /* The above lesser used JOIN syntax of USING is very much
+               like saying
+
+               ON StudentContactAssoc.StudentContactAssocID = 
+                  StudentContactDetail.StudentContactAssocID
+
+               ...however there are very important differences. Once you USE
+               a field this way, you can never reference that field with the
+               table name or you will break your query. Later tables must
+               also USE the field if it has the same field. This saves us
+               a bunch of ON ___ = ___ AND ___ = ___ AND ___ = ___ queries.
+            */
+        LEFT JOIN PersonEmailAddressAssoc 
+            ON StudentContactAssoc.PersonID = PersonEmailAddressAssoc.PersonID
+            /* I had to use ON here instead of USING because of an issue with
+               an upcoming table in the query. More to follow...
+            */
+        LEFT JOIN EmailAddress
+            USING (EmailAddressID)
+        LEFT JOIN Codeset PhoneCodeset 
+            ON PhoneCodeset.CodeType = 'Phone' AND PhoneCodeset.Code = 'Mobile'
+        LEFT JOIN PersonPhoneNumberAssoc
+            ON StudentContactAssoc.PersonID = PersonPhoneNumberAssoc.PersonID
+            AND PersonPhoneNumberAssoc.PhoneTypeCodesetID = PhoneCodeset.CodesetID
+            /* OK, so let's talk about why we could not use USING here or above
+               with PersonEmailAddressAssoc.
+
+               USING requires the actual name(s) of the field(s) to match in both
+               tables. We cannot use USING because PhoneTypeCodesetID is not the
+               same name as CodesetID. If both fields had just shown CodesetID,
+               we could have done USING (PersonID,CodesetID) on this table and
+               USING (PersonID) on PersonEmailAddressAssoc, but since they're
+               different, that throws that out the window.
+
+               We can't mix USING with ON/AND so our only option is to do the
+               normal syntax. Since we couldn't use USING for PersonID here, we
+               couldn't use it above either.
+            */
+        LEFT JOIN PhoneNumber USING (PhoneNumberID)
+    WHERE
+        /* TRUNC(SYSDATE) strips the time out of SYSDATE. This gives us a like-for-
+           like comparison when looking at StartDate and EndDate, as those are only
+           dates. It won't matter much unless the EndDate is today. If you leave
+           TRUNC() off of it and EndDate is today, it will see that you're past
+           midnight today so it would erroneously filter out the contact when they
+           should continue to pull until after today.
+        */
+        TRUNC(SYSDATE) BETWEEN 
+            COALESCE(StudentContactDetail.StartDate,TRUNC(SYSDATE))
+            AND COALESCE(StudentContactDetail.EndDate,TRUNC(SYSDATE))
+)
+SELECT 
+    stds.dcid AS std_DCID,
+    stdscore.StudentsDCID AS stdcore_DCID,
+    stds.student_number AS student_number,
+    stds.SchoolID AS SchoolID,
+    stds.last_name AS last_name,
+    stds.first_name AS first_name,
+    stds.middle_name AS middle_name,
+    stds.gender AS gender,
+    stds.grade_level AS grade_level,
+    stdscore.graduation_year AS graduation_year,
+    stds.DOB AS DOB,
+    stds.Street AS Street,
+    stds.City AS City,
+    stds.State AS State,
+    stds.Zip AS Zip,
+    stds.Home_Phone AS Home_Phone,
+    stds.Home_Room AS Home_Room,
+    stds.Lastfirst AS Lastfirst,
+    stds.enroll_status AS enroll_status,
+    Contacts1.Email Contacts1_Email,
+    Contacts2.Email Contacts2_Email,
+    stdscore.graduation_year
+FROM
+    Students stds
+    INNER JOIN studentcorefields stdscore ON (stds.dcid = stdscore.StudentsDCID)
+    LEFT JOIN (SELECT * FROM Contacts) Contacts1
+        ON stds.DCID = Contacts1.DCID
+        AND COALESCE(Contacts1.PriorityRank,1)    = 1
+        AND COALESCE(Contacts1.PhoneNumberRank,1) = 1
+        AND COALESCE(Contacts1.EmailRank,1)       = 1
+    /* This syntax was used instead of a basic 'LEFT JOIN
+       Contacts Contacts1' because it is probably the only
+       way to reliably satisfy the PowerQuery WITH clause parser.
+
+       Again SPECIAL THANKS!! to Eric Bauer for this awesome
+       workaround! groups.io/g/PSUG/topic/29200258
+
+       We are aliasing our CTE/WITH so we can call it multiple times
+       with different needs and ensure we only get 1 row per student.
+       We just use the alias in the SELECT to pull from whichever one
+       we need.... e.g. Contacts1.PhoneNumber.
+
+       Since we set up the PriorityRank, PhoneNumberRank, and
+       EmailRank in the CTE, we can leverage them in our LEFT JOIN
+       so we ensure we only get the first phone number and the first
+       e-mail per contact. If you happen to want others, you can
+       LEFT JOIN the CTE as much as you want adjusting the values.
+
+       * PriorityRank is the individual contact in priority order,
+         starting with 1. I don't think the COALESCE was necessary for
+         this field now that I'm documenting this, but I think I did it
+         for consistency with the other fields to follow.
+
+       * PhoneNumberRank is the phone number priority for that given
+         contact. We use COALESCE in case the contact does not have
+         a cell phone number. We still want them to pull. By saying it
+         has to equal 1, we only want the first phone number (if there
+         are any).
+
+       * EmailRank is the e-mail priority for that given contact.
+         COALESCE() has the same purpose here as it did for PhoneNumberRank.
+    */
+    LEFT JOIN (SELECT * FROM Contacts) Contacts2
+        ON stds.DCID = Contacts2.DCID
+        AND COALESCE(Contacts2.PriorityRank,1)    = 2
+        AND COALESCE(Contacts2.PhoneNumberRank,1) = 1
+        AND COALESCE(Contacts2.EmailRank,1)       = 1
+    LEFT JOIN (SELECT * FROM Contacts) Contacts3
+        ON stds.DCID = Contacts3.DCID
+        AND COALESCE(Contacts3.PriorityRank,1)    = 3
+        AND COALESCE(Contacts3.PhoneNumberRank,1) = 1
+        AND COALESCE(Contacts3.EmailRank,1)       = 1
+    ]]></sql>
+  </query>
+</queries>

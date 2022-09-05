@@ -1,0 +1,2 @@
+Generating Destiny patron import file M:\Admin\Registrar\Douglas\Destiny\2020-01\ALL_STUDENTS.xml
+Completed in 0 minutes, 2 seconds.

@@ -1,0 +1,20 @@
+SELECT 
+    S.STUDENT_NUMBER AS GR,
+    S.First_Name AS FirstName,
+    S.Middle_Name AS MiddleName,
+    S.Last_Name AS LastName,
+    DECODE(S.GRADE_LEVEL,
+        0,'K3',
+        -1,'K4',
+        -2,'K5',S.GRADE_LEVEL) AS GradeLevel,
+    DECODE (S.SCHOOLID,
+        300,'High School',
+        200,'Middle School',
+        100,'Lower School') AS SCHOOL,
+    DECODE(EXT.BLOQUEIO,
+        0,'Unblocked',
+        1,'Blocked') AS BLOCKED
+FROM
+    Students S INNER JOIN U_DEF_EXT_STUDENTS EXT ON S.DCID = EXT.STUDENTSDCID
+WHERE  
+    S.enroll_status = 0

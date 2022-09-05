@@ -1,0 +1,134 @@
+<queries>
+
+    <query name="com.graded.destiny.students.get_data" coreTable="Students">
+        <description>A query that retrieves all Students for Destiny</description>
+        <columns>
+
+            <column column="Students.dcid">std_DCID</column>
+            <column column="studentcorefields.StudentsDCID">stdcore_DCID</column>
+            <column column="Students.student_number">student_number</column>
+            <column column="Students.SchoolID">SchoolID</column>
+            <column column="Students.last_name">last_name</column>
+            <column column="Students.first_name">first_name</column>
+            <column column="Students.middle_name">middle_name</column>
+            <column column="Students.gender">gender</column>
+            <column column="Students.grade_level">grade_level</column>
+            <column column="studentcorefields.graduation_year">graduation_year</column>
+            <column column="Students.DOB">DOB</column>
+            <column column="Students.Street">Street</column>
+            <column column="Students.City">City</column>
+            <column column="Students.State">State</column>
+            <column column="Students.Zip">Zip</column>
+            <column column="Students.Home_Phone">Home_Phone</column>
+            <column column="Students.Home_Room">Home_Room</column>
+            <column column="Students.Lastfirst">Lastfirst</column>
+            <column column="Students.enroll_status">enroll_status</column>
+            <column column="Students.enroll_status">Mother</column>
+            <column column="Students.enroll_status">Father</column>
+
+        </columns>
+    <sql><![CDATA[
+        WITH 
+            mother_email AS (
+                SELECT
+                    SCA.StudentDCID,
+                    E.EmailAddress
+                FROM
+                    Person P
+                    INNER JOIN StudentContactAssoc SCA ON (SCA.personID = p.id)
+                    INNER JOIN StudentContactDetail SCD ON (SCD.STUDENTCONTACTASSOCID = SCA.STUDENTCONTACTASSOCID)
+                    INNER JOIN PersonEmailAddressAssoc PEAA ON (PEAA.PersonID = P.ID)
+                    INNER JOIN EmailAddress E ON (E.EmailAddressID = PEAA.EmailAddressID)
+                WHERE
+                    SCD.RELATIONSHIPTYPECODESETID = 30
+            ),
+            father_email AS (
+                SELECT
+                    SCA.StudentDCID,
+                    E.EmailAddress
+                FROM
+                    Person P
+                    INNER JOIN StudentContactAssoc SCA ON (SCA.personID = p.id)
+                    INNER JOIN StudentContactDetail SCD ON (SCD.STUDENTCONTACTASSOCID = SCA.STUDENTCONTACTASSOCID)
+                    INNER JOIN PersonEmailAddressAssoc PEAA ON (PEAA.PersonID = P.ID)
+                    INNER JOIN EmailAddress E ON (E.EmailAddressID = PEAA.EmailAddressID)
+                WHERE
+                    SCD.RELATIONSHIPTYPECODESETID = 26
+            )
+
+            
+        SELECT
+            stds.dcid AS std_DCID,
+            stdscore.StudentsDCID AS stdcore_DCID,
+            stds.student_number AS student_number,
+            stds.SchoolID AS SchoolID,
+            stds.last_name AS last_name,
+            stds.first_name AS first_name,
+            stds.middle_name AS middle_name,
+            stds.gender AS gender,
+            stds.grade_level AS grade_level,
+            stdscore.graduation_year AS graduation_year,
+            stds.DOB AS DOB,
+            stds.Street AS Street,
+            stds.City AS City,
+            stds.State AS State,
+            stds.Zip AS Zip,
+            stds.Home_Phone AS Home_Phone,
+            stds.Home_Room AS Home_Room,
+            stds.Lastfirst AS Lastfirst,
+            stds.enroll_status AS enroll_status,
+            mother_email.EmailAddress as Mother,
+            father_email.EmailAddress as Father
+        FROM
+            Students stds
+            LEFT JOIN studentcorefields stdscore ON stds.dcid = stdscore.StudentsDCID
+            LEFT JOIN (SELECT * FROM mother_email) mother_email on mother_email.StudentDCID = stds.dcid
+            LEFT JOIN (SELECT * FROM father_email) father_email on father_email.StudentDCID = stds.dcid
+        WHERE
+            stds.enroll_status = 0
+    ]]></sql>
+  </query>
+  
+  <query name="com.graded.destiny.staff.get_data" coreTable="Teachers">
+        <description>A query that retrieves all Staff for Destiny</description>
+        <columns>
+
+            <column column="Teachers.TeacherNumber">TeacherNumber</column>
+            <column column="Teachers.HomeSchoolID">HomeSchoolID</column>
+            <column column="Teachers.Last_Name">Last_Name</column>
+            <column column="Teachers.First_Name">First_Name</column>
+            <column column="Teachers.Middle_Name">Middle_Name</column>
+            <column column="Teachers.PreferredName">PreferredName</column>
+            <column column="Teachers.Email_Addr">Email_Addr</column>
+            <column column="Teachers.Street">Street</column>
+            <column column="Teachers.City">City</column>
+            <column column="Teachers.State">State</column>
+            <column column="Teachers.ZIP">ZIP</column>
+            <column column="Teachers.Home_Phone">Home_Phone</column>
+            <column column="Teachers.PTAccess">PTAccess</column>
+
+        </columns>
+    <sql><![CDATA[
+        SELECT 
+            T.TeacherNumber,
+            T.HomeSchoolID,
+            T.Last_Name,
+            T.First_Name,
+            T.Middle_Name,
+            T.PreferredName,
+            T.Email_Addr,
+            T.Street,
+            T.City,
+            T.State,
+            T.ZIP,
+            T.Home_Phone,
+            T.PTAccess
+        FROM 
+            Teachers T
+        WHERE 
+            T.SchoolID = T.HomeSchoolID and
+            T.Status <> 2 and
+            T.GroupValue <> 15
+    ]]></sql>
+  </query>
+</queries>

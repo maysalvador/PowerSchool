@@ -1,0 +1,149 @@
+<queries>
+
+    <query name="com.graded.destiny.students.get_data" coreTable="Students">
+        <description>A query that retrieves all Students for Destiny</description>
+        <columns>
+        
+            <column column="Students.dcid">std_DCID</column>
+            <column column="studentcorefields.StudentsDCID">stdcore_DCID</column>
+            <column column="Students.student_number">student_number</column>
+            <column column="Students.SchoolID">SchoolID</column>
+            <column column="Students.last_name">last_name</column>
+            <column column="Students.first_name">first_name</column>
+            <column column="Students.middle_name">middle_name</column>
+            <column column="Students.gender">gender</column>
+            <column column="Students.grade_level">grade_level</column>
+            <column column="studentcorefields.graduation_year">graduation_year</column>
+            <column column="Students.DOB">DOB</column>
+            <column column="Students.Street">Street</column>
+            <column column="Students.City">City</column>
+            <column column="Students.State">State</column>
+            <column column="Students.Zip">Zip</column>
+            <column column="Students.Home_Phone">Home_Phone</column>
+            <column column="Students.Home_Room">Home_Room</column>
+            <column column="Students.Lastfirst">Lastfirst</column>
+            <column column="Students.enroll_status">enroll_status</column>
+            <column column="Students.Home_Phone">person1_email1</column>
+            <column column="Students.Home_Phone">person2_email1</column>
+            <column column="studentcorefields.graduation_year">graduation_year</column>
+
+        </columns>
+    <sql><![CDATA[
+select
+    stds.dcid AS std_DCID,
+    stdscore.StudentsDCID AS stdcore_DCID,
+    stds.student_number AS student_number,
+    stds.SchoolID AS SchoolID,
+    stds.last_name AS last_name,
+    stds.first_name AS first_name,
+    stds.middle_name AS middle_name,
+    stds.gender AS gender,
+    stds.grade_level AS grade_level,
+    stdscore.graduation_year AS graduation_year,
+    stds.DOB AS DOB,
+    stds.Street AS Street,
+    stds.City AS City,
+    stds.State AS State,
+    stds.Zip AS Zip,
+    stds.Home_Phone AS Home_Phone,
+    stds.Home_Room AS Home_Room,
+    stds.Lastfirst AS Lastfirst,
+    stds.enroll_status AS enroll_status,
+    contacts.person1_email1,
+    contacts.person2_email1,
+    stdscore.graduation_year
+from
+    students stds
+    INNER JOIN studentcorefields stdscore ON (stds.dcid = stdscore.StudentsDCID)
+    left outer join (
+        select
+            *
+        from (
+            select
+                studentcontactassoc.studentdcid,
+                row_number() over (partition by studentcontactassoc.studentdcid order by studentcontactassoc.contactpriorityorder) R,
+                person.lastname,
+                person.firstname,
+                personemail.email1,
+                personemail.email2,
+                personemail.email3,
+                personphonenumber.phonenumber1,
+                personphonenumber.phonenumber2,
+                personphonenumber.phonenumber3,
+                personaddress.address1,
+                personaddress.address2,
+                personaddress.address3
+            from    
+                studentcontactassoc
+                left outer join person on studentcontactassoc.personid = person.id    
+                left outer join (
+                    select
+                        *
+                    from (        
+                        select
+                            personemailaddressassoc.personid,
+                            emailaddress.emailaddress,
+                            row_number() over (partition by personemailaddressassoc.personid order by personemailaddressassoc.emailaddresspriorityorder) R
+                        from
+                            personemailaddressassoc
+                            left outer join emailaddress on personemailaddressassoc.emailaddressid = emailaddress.emailaddressid
+                    )
+                    pivot (
+                        max(emailaddress)
+                        for R in (1 email1, 2 email2, 3 email3)
+                    )
+                ) personemail on person.id = personemail.personid    
+                left outer join (
+                    select
+                        *
+                    from (        
+                        select
+                            personphonenumberassoc.personid,
+                            phonenumber.phonenumber,
+                            row_number() over (partition by personphonenumberassoc.personid order by personphonenumberassoc.phonenumberpriorityorder) R
+                        from
+                            personphonenumberassoc
+                            left outer join phonenumber on personphonenumberassoc.phonenumberid = phonenumber.phonenumberid
+                    )
+                    pivot (
+                        max(phonenumber)
+                        for R in (1 phonenumber1, 2 phonenumber2, 3 phonenumber3)
+                    )
+                ) personphonenumber on person.id = personphonenumber.personid    
+                left outer join (
+                    select
+                        *
+                    from (        
+                        select
+                            personaddressassoc.personid,
+                            case when personaddress.personaddressid is not null then personaddress.street || ' / ' || personaddress.city || ', ' || state.code || personaddress.postalcode else '' end address,
+                            row_number() over (partition by personaddressassoc.personid order by personaddressassoc.addresspriorityorder) R
+                        from
+                            personaddressassoc
+                            left outer join personaddress on personaddressassoc.personaddressid = personaddress.personaddressid
+                            left outer join codeset state on personaddress.statescodesetid = state.codesetid
+                    )
+                    pivot (
+                        max(address)
+                        for R in (1 address1, 2 address2, 3 address3)
+                    )
+                ) personaddress on person.id = personaddress.personid    
+        )
+        pivot (
+            max(lastname) lastname,
+            max(firstname) firstname,
+            max(email1) email1,
+            max(email2) email2,
+            max(email3) email3,
+            max(phonenumber1) phonenumber1,
+            max(phonenumber2) phonenumber2,
+            max(phonenumber3) phonenumber3,
+            max(address1) address1,
+            max(address2) address2,
+            max(address3) address3
+            for R in (1 person1, 2 person2, 3 person3, 4 person4, 5 person5, 6 person6)
+        )
+    ) contacts on students.dcid = contacts.studentdcid
+    ]]></sql>
+  </query>
+</queries>

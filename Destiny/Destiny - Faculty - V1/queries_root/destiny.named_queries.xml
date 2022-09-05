@@ -1,0 +1,45 @@
+<queries>
+
+    <query name="com.graded.destiny.staff.get_data" coreTable="Teachers">
+        <description>A query that retrieves all Staff for Destiny</description>
+        <columns>
+
+            <column column="Teachers.TeacherNumber">TeacherNumber</column>
+            <column column="Teachers.HomeSchoolID">HomeSchoolID</column>
+            <column column="Teachers.Last_Name">Last_Name</column>
+            <column column="Teachers.First_Name">First_Name</column>
+            <column column="Teachers.Middle_Name">Middle_Name</column>
+            <column column="Teachers.PreferredName">PreferredName</column>
+            <column column="Teachers.Email_Addr">Email_Addr</column>
+            <column column="Teachers.Street">Street</column>
+            <column column="Teachers.City">City</column>
+            <column column="Teachers.State">State</column>
+            <column column="Teachers.ZIP">ZIP</column>
+            <column column="Teachers.Home_Phone">Home_Phone</column>
+            <column column="Teachers.PTAccess">PTAccess</column>
+
+        </columns>
+    <sql><![CDATA[
+        SELECT 
+            T.TeacherNumber,
+            T.HomeSchoolID,
+            T.Last_Name,
+            T.First_Name,
+            T.Middle_Name,
+            T.PreferredName,
+            T.Email_Addr,
+            T.Street,
+            T.City,
+            T.State,
+            T.ZIP,
+            T.Home_Phone,
+            T.PTAccess
+        FROM 
+            Teachers T
+        WHERE 
+            T.SchoolID = T.HomeSchoolID and
+            T.Status <> 2 and
+            T.TeacherNumber not in ('336875','346170','349518','339950','305553')
+    ]]></sql>
+  </query>
+</queries>

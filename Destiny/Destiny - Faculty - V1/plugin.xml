@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://plugin.powerschool.pearson.com"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://plugin.powerschool.pearson.com plugin.xsd"
+        name="Graded Destiny Faculty Data Sync"
+        version="1.0"
+        description="Extracts staff data for Destiny">
+
+    <oauth></oauth>
+
+    <access_request>
+
+        <field table="Teachers" field="TeacherNumber" access="ViewOnly" />
+        <field table="Teachers" field="HomeSchoolID" access="ViewOnly" />
+        <field table="Teachers" field="Last_Name" access="ViewOnly" />
+        <field table="Teachers" field="First_Name" access="ViewOnly" />
+        <field table="Teachers" field="Middle_Name" access="ViewOnly" />
+        <field table="Teachers" field="PreferredName" access="ViewOnly" />
+        <field table="Teachers" field="Email_Addr" access="ViewOnly" />
+        <field table="Teachers" field="Street" access="ViewOnly" />
+        <field table="Teachers" field="City" access="ViewOnly" />
+        <field table="Teachers" field="State" access="ViewOnly" />
+        <field table="Teachers" field="ZIP" access="ViewOnly" />
+        <field table="Teachers" field="Home_Phone" access="ViewOnly" />
+        <field table="Teachers" field="PTAccess" access="ViewOnly" />
+
+    </access_request>
+
+
+    <publisher name="Graded School">
+        <contact email="mayra.salvador@graded.br" />
+    </publisher>
+</plugin>
